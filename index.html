@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ARGUS C2 — Frontline Command Interface</title>
+    <meta name="description" content="ARGUS C2 — Real-time multi-drone command and control prototype" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  </head>
+  <body>
+    <status-bar></status-bar>
+
+    <div id="app-layout">
+      <!-- Left sidebar: drone list + fleet stats -->
+      <aside id="left-panel">
+        <fleet-stats></fleet-stats>
+        <drone-list></drone-list>
+      </aside>
+
+      <!-- Main map view -->
+      <main id="map-container">
+        <map-view></map-view>
+      </main>
+
+      <!-- Right panel: telemetry detail -->
+      <aside id="right-panel">
+        <telemetry-panel></telemetry-panel>
+      </aside>
+    </div>
+
+    <!-- Alert panel overlay -->
+    <alert-panel></alert-panel>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
