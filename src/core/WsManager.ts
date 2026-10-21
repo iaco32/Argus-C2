@@ -8,7 +8,23 @@
 import { store } from "./DroneStore";
 import type { TelemetryPacket } from "../types";
 
-const WS_URL = "ws://localhost:8765";
+function resolveWsUrl(): string {
+  const envUrl = (import.meta as any).env?.VITE_WS_URL;
+  if (envUrl) return envUrl;
+
+  if (typeof window !== "undefined" && window.location) {
+    // In local Vite dev environment (port 5173), connect to backend simulator on 8765
+    if (window.location.port === "5173") {
+      return "ws://localhost:8765";
+    }
+    // In production (e.g. Render), connect to the same host using secure wss:// if https:
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    return `${protocol}//${window.location.host}`;
+  }
+
+  return "ws://localhost:8765";
+}
+
 const MAX_RECONNECT_DELAY = 16000;
 const INITIAL_RECONNECT_DELAY = 500;
 
@@ -39,7 +55,8 @@ class WsManager {
 
     this.setState("connecting");
     try {
-      this.ws = new WebSocket(WS_URL);
+      const url = resolveWsUrl();
+      this.ws = new WebSocket(url);
     } catch {
       this.scheduleReconnect();
       return;

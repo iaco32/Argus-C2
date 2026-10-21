@@ -26,7 +26,7 @@ Built with high-performance vanilla TypeScript, Native Web Components, PixiJS 2D
 ## Features
 
 - **High-Frequency WebSocket Pipeline**: Real-time bi-directional streaming of multi-drone telemetry packets with backpressure management.
-- **Interactive 2D Tactical Map (`<map-view>`)**: Powered by PixiJS v8 with hardware-accelerated WebGL rendering, smooth panning, zooming, waypoint tracking, heading vectors, and drone selection reticles.
+- **Interactive 2D Tactical Map (`<map-view>`)**: Powered by PixiJS v8 with hardware-accelerated WebGL rendering, smooth panning, zooming, waypoint tracking, heading vectors, and drone selection reticles. Positioned around the **Poligono Interforze Salto di Quirra (PISQ)** in Sardinia, Italy (`39.55°N, 9.60°E`) over the Tyrrhenian coastal and maritime airspace.
 - **Fleet List & Filtering (`<drone-list>`)**:
   - Live search by Drone ID.
   - Quick-filter tabs (`ALL`, `ACTIVE`, `ALERTS`, `RETURNING`).
@@ -34,14 +34,15 @@ Built with high-performance vanilla TypeScript, Native Web Components, PixiJS 2D
   - Dedicated "Scroll-to-Top" control.
 - **Detailed Telemetry Panel (`<telemetry-panel>`)**:
   - Real-time readings for altitude, ground speed, heading, battery percentage, link signal strength, and GPS coordinates.
-  - HTML5 Canvas sparkline historical charts for battery, altitude, and velocity.
+  - Calibrated HTML5 Canvas sparklines with Y-axis reference scales, dotted mid-level grids, live metric headers, `MIN` / `MAX` statistics, and `T-60s` timeline tracking.
 - **System Alerts Drawer (`<alert-panel>`)**:
-  - Slide-over alert feed tracking battery drops, signal degradation, and mission milestones.
-  - Individual alert dismissal and one-click "CLEAR ALL ALERTS" with nominal system status verification.
+  - High-visibility tactical red alert feed tracking battery drops, signal degradation, and mission emergencies.
+  - Live synchronized alert counters between status bar and drawer (maintains accurate active alert count on drawer open/close).
+  - Individual alert dismissal (`✕`) and one-click "CLEAR ALL ALERTS" with nominal system status verification (`ALL SYSTEMS NOMINAL ✓`).
 - **Collapsible Fleet Overview (`<fleet-stats>`)**:
   - Expandable bottom panel providing aggregate metrics: active fleet count, alert ratios, and average battery levels.
 - **Tactical Status Bar (`<status-bar>`)**:
-  - WebSocket connection indicator, live round-trip latency (`PING` in ms), 60 FPS counter, and a simulation transmission rate slider.
+  - WebSocket connection indicator, live round-trip latency (`PING` in ms), 60 FPS counter, synchronized alert badge, and a simulation transmission rate slider.
 
 ---
 
@@ -126,27 +127,32 @@ The telemetry simulation server generates realistic drone physics, multi-waypoin
 
 Run the simulation server with:
 
+### Option A: Development Mode (Vite with Hot Module Replacement)
+
+Run both commands in separate terminal tabs:
+
 ```bash
+# Terminal 1: Start the telemetry simulation server
 npm run server
-```
 
-- **Address**: `ws://localhost:8765`
-- By default, it simulates **30 drones** navigating waypoints around operational coordinates with dynamic physics at **10 Hz**.
-- It accepts runtime commands from the frontend to dynamically adjust the drone count (1-500) and tick rate (1-30 Hz).
-
----
-
-## Starting the Frontend Application
-
-In a separate terminal, launch the Vite development server:
-
-```bash
+# Terminal 2: Start the Vite dev server
 npm run dev
 ```
 
-- **URL**: `http://localhost:5173`
-- Open the URL in any modern desktop browser (Chrome, Edge, Firefox, or Safari).
-- The application will automatically connect to `ws://localhost:8765`, light up the `CONNECTED` indicator, and stream live drone telemetry to the map and fleet list.
+- **Frontend URL**: `http://localhost:5173`
+- **WebSocket URL**: `ws://localhost:8765`
+
+### Option B: Unified Production / Standalone Server (Single Port)
+
+Build the frontend bundle and serve both the web application and WebSocket from the Node server:
+
+```bash
+npm run build
+npm start
+```
+
+- **Unified Web & WebSocket URL**: `http://localhost:8765` (serves compiled static assets from `dist/` and handles WebSocket connections on the same port).
+
 
 ---
 
@@ -233,3 +239,21 @@ The frontend communicates with the server via WebSocket JSON packets:
 
 - `set_drone_count`: Updates the active simulated fleet size (`{ "type": "set_drone_count", "count": 25 }`).
 - `set_tick_rate`: Updates simulation broadcast frequency (`{ "type": "set_tick_rate", "hz": 15 }`).
+
+---
+
+## Deployment (Render.com)
+
+The project includes a unified production server (`server/sim.ts`) capable of serving both the compiled static frontend (`dist/`) and the real-time WebSocket telemetry pipeline on a single HTTP/WS port.
+
+### 1-Click / Blueprint Deployment
+
+1. Sign up or log in to [Render.com](https://render.com).
+2. Connect your GitHub account and select the **`Argus-C2`** repository.
+3. Click **New +** > **Blueprint** (or create a **Web Service**):
+   - **Environment**: Node
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm start`
+   - **Environment Variable**: `NODE_VERSION` = `22.12.0`
+4. Render will build the Vite assets, launch the Node server, and automatically assign an HTTPS/WSS domain (e.g. `https://argus-c2.onrender.com`).
+5. Open your assigned URL in the browser — the frontend will automatically connect to the live WebSocket simulation via secure `wss://`.

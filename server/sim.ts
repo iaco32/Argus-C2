@@ -3,9 +3,26 @@
  * Generates realistic drone telemetry at high frequency via WebSocket.
  */
 
+import http from "node:http";
+import fs from "node:fs";
+import path from "node:path";
 import { WebSocketServer, WebSocket } from "ws";
 
-const PORT = 8765;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8765;
+const DIST_DIR = path.resolve(process.cwd(), "dist");
+
+const MIME_TYPES: Record<string, string> = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "application/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
+  ".webp": "image/webp",
+  ".woff2": "font/woff2",
+};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -78,10 +95,11 @@ export interface TelemetryPacket {
 
 // ─── Simulation Constants ─────────────────────────────────────────────────────
 
-const BASE_LAT = 50.4501;
-const BASE_LON = 30.5234;
-const SPREAD_LAT = 0.3;
-const SPREAD_LON = 0.4;
+// Poligono Interforze Salto di Quirra (PISQ) / Tyrrhenian Range, Sardinia, Italy
+const BASE_LAT = 39.5500;
+const BASE_LON = 9.6000;
+const SPREAD_LAT = 0.25;
+const SPREAD_LON = 0.35;
 
 const MISSIONS = [
   "ISR-ALPHA", "PATROL-BRAVO", "STRIKE-CHARLIE",
@@ -208,7 +226,55 @@ function toSnapshot(drone: DroneState): DroneSnapshot {
 
 // ─── Server ───────────────────────────────────────────────────────────────────
 
-const wss = new WebSocketServer({ port: PORT });
+const server = http.createServer((req, res) => {
+  // Health check endpoint for cloud load balancers / Render
+  if (req.url === "/healthz" || req.url === "/health") {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("OK");
+    return;
+  }
+
+  // If dist doesn't exist yet (e.g. running in pure dev without build)
+  if (!fs.existsSync(DIST_DIR)) {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("ARGUS C2 Simulation Server (run 'npm run build' to serve frontend)");
+    return;
+  }
+
+  const safeUrl = (req.url || "/").split("?")[0];
+  let filePath = path.join(DIST_DIR, safeUrl);
+
+  // Security: prevent directory traversal
+  if (!filePath.startsWith(DIST_DIR)) {
+    res.writeHead(403);
+    res.end("Forbidden");
+    return;
+  }
+
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+    filePath = path.join(filePath, "index.html");
+  }
+
+  // Fallback to index.html for SPA client-side routing
+  if (!fs.existsSync(filePath)) {
+    filePath = path.join(DIST_DIR, "index.html");
+  }
+
+  const ext = path.extname(filePath).toLowerCase();
+  const contentType = MIME_TYPES[ext] || "application/octet-stream";
+
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(500);
+      res.end("Internal Server Error");
+      return;
+    }
+    res.writeHead(200, { "Content-Type": contentType });
+    res.end(data);
+  });
+});
+
+const wss = new WebSocketServer({ server });
 let drones: DroneState[] = [];
 let droneCount = 50;
 let tickRateHz = 10;
@@ -289,5 +355,9 @@ wss.on("connection", (ws) => {
   ws.on("close", () => console.log(`[WS] Client disconnected (${wss.clients.size} remaining)`));
 });
 
-console.log(`ARGUS Telemetry Server running on ws://localhost:${PORT}`);
-console.log(`   Simulating ${droneCount} drones @ ${tickRateHz}Hz`);
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`ARGUS C2 Server running on port ${PORT}`);
+  console.log(`   Web UI: http://localhost:${PORT} (serving ${fs.existsSync(DIST_DIR) ? "dist/" : "dev mode"})`);
+  console.log(`   WebSocket: ws://localhost:${PORT}`);
+  console.log(`   Simulating ${droneCount} drones @ ${tickRateHz}Hz`);
+});

@@ -297,7 +297,7 @@ status-bar {
 .status-bar__alert {
 	display: flex;
 	align-items: center;
-	gap: 4px;
+	gap: 6px;
 	padding: 4px 10px;
 	border: 1px solid var(--border);
 	border-radius: 4px;
@@ -306,12 +306,20 @@ status-bar {
 	margin-left: auto;
 }
 .status-bar__alert:hover {
-	border-color: var(--status-warning);
-	background: rgba(255, 170, 0, 0.08);
+	border-color: var(--status-lost);
+	background: rgba(255, 51, 68, 0.08);
+}
+.status-bar__alert.has-alerts {
+	border-color: rgba(255, 51, 68, 0.4);
+	background: rgba(255, 51, 68, 0.08);
 }
 .alert-icon {
-	color: var(--status-warning);
+	color: var(--text-muted);
 	font-size: 14px;
+	transition: color var(--t-fast);
+}
+.status-bar__alert.has-alerts .alert-icon {
+	color: var(--status-lost);
 }
 .alert-count {
 	font-family: var(--font-mono);
@@ -322,7 +330,7 @@ status-bar {
 	text-align: center;
 }
 .alert-count.has-alerts {
-	color: var(--status-warning);
+	color: var(--status-lost);
 	animation: pulse-number 2s ease-in-out infinite;
 }
 
@@ -917,20 +925,52 @@ telemetry-panel {
 	background: var(--bg-card);
 	border: 1px solid var(--border);
 	border-radius: 4px;
-	padding: 8px;
+	padding: 8px 8px 6px;
 }
-.telem-chart__label {
+.telem-chart__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 4px;
+}
+.telem-chart__title {
 	font-family: var(--font-mono);
-	font-size: 7px;
+	font-size: 8px;
 	letter-spacing: 0.1em;
 	color: var(--text-muted);
-	margin-bottom: 5px;
 	text-transform: uppercase;
+}
+.telem-chart__curr {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	font-weight: 700;
+	color: var(--text-primary);
+	text-shadow: 0 0 8px currentColor;
 }
 .sparkline {
 	display: block;
 	width: 100%;
-	height: 48px;
+	height: 58px;
+	background: rgba(0, 0, 0, 0.2);
+	border-radius: 2px;
+}
+.telem-chart__meta {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 4px;
+	font-family: var(--font-mono);
+	font-size: 7.5px;
+	color: var(--text-muted);
+	letter-spacing: 0.05em;
+}
+.telem-chart__time {
+	opacity: 0.75;
+}
+.telem-chart__stats {
+	font-size: 7.5px;
+	color: var(--text-secondary);
+	opacity: 0.9;
 }
 
 .telem-mission-bar {
@@ -1014,9 +1054,10 @@ alert-panel {
 	border: 1px solid var(--border);
 }
 .alert-panel__badge.has-alerts {
-	background: rgba(255, 170, 0, 0.15);
-	color: var(--status-warning);
-	border-color: rgba(255, 170, 0, 0.4);
+	background: rgba(255, 51, 68, 0.15);
+	color: var(--status-lost);
+	border-color: rgba(255, 51, 68, 0.5);
+	box-shadow: 0 0 8px rgba(255, 51, 68, 0.25);
 }
 .alert-panel__close {
 	background: none;
@@ -1109,8 +1150,14 @@ alert-panel {
 	transition: background var(--t-fast);
 }
 .alert-item.unread {
-	background: rgba(255, 255, 255, 0.03);
-	border-left: 2px solid var(--status-warning);
+	background: rgba(255, 51, 68, 0.05);
+	border-left: 3px solid var(--status-lost);
+}
+.alert-item.alert-danger {
+	border-left: 3px solid var(--status-lost);
+}
+.alert-item.alert-warn {
+	border-left: 3px solid var(--status-lost);
 }
 .alert-item:hover {
 	background: var(--bg-hover);
@@ -1121,9 +1168,7 @@ alert-panel {
 	flex-shrink: 0;
 	margin-top: 1px;
 }
-.alert-item.alert-warn .alert-item__icon {
-	color: var(--status-warning);
-}
+.alert-item.alert-warn .alert-item__icon,
 .alert-item.alert-danger .alert-item__icon {
 	color: var(--status-lost);
 }

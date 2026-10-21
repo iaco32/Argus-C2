@@ -96,7 +96,6 @@ export class StatusBarElement extends HTMLElement {
     // Alert button
     const alertBtn = this.querySelector("#sb-alert-btn") as HTMLElement;
     alertBtn.addEventListener("click", () => {
-      store.markAlertsRead();
       document.querySelector("alert-panel")?.toggleAttribute("visible");
     });
 
@@ -161,12 +160,16 @@ export class StatusBarElement extends HTMLElement {
     set("sb-warn", `${stats.warning} WRN`);
     set("sb-lost", `${stats.lost} LST`);
 
-    // Alert count
-    const count = store.getUnreadAlertCount();
+    // Alert count (active alerts matching the system alerts drawer)
+    const count = store.getAlerts().length;
     const countEl = get("sb-alert-count");
     if (countEl) {
       countEl.textContent = String(count);
       countEl.classList.toggle("has-alerts", count > 0);
+    }
+    const alertBtn = get("sb-alert-btn");
+    if (alertBtn) {
+      alertBtn.classList.toggle("has-alerts", count > 0);
     }
   }
 }

@@ -99,7 +99,6 @@ export class AlertPanelElement extends HTMLElement {
       const inner = this.querySelector("#alert-panel-inner") as HTMLElement;
       if (inner) inner.classList.toggle("open", this.visible);
       if (this.visible) {
-        store.markAlertsRead();
         this.renderAlerts();
       }
     }

@@ -68,7 +68,7 @@ export class MapViewElement extends HTMLElement {
     this.appendChild(mapDiv);
 
     this.map = L.map(mapDiv, {
-      center: [50.4501, 30.5234],
+      center: [39.5500, 9.6000],
       zoom: 10,
       zoomControl: true,
       attributionControl: false,
